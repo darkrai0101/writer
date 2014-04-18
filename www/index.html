@@ -13,84 +13,103 @@
 	<script src="lib/medium-editor/js/medium-editor.js"></script>
 	<script src="lib/angular-medium-editor.min.js"></script>
 	<script>
-		'use strict';
-		var domain = "http://210.245.88.160:9000";
-		angular.module('configContenteditable', []).
-		  directive('contenteditable', function () {
-		      return {
-		          restrict: 'A', // only activate on element attribute
-		          require: '?ngModel', // get a hold of NgModelController
-		          link: function (scope, element, attrs, ngModel) {
-		              if (!ngModel) return; // do nothing if no ng-model
+	var app = {
+	    // Application Constructor
+	    initialize: function() {
+	        this.bindEvents();
+	    },
+	    // Bind Event Listeners
+	    //
+	    // Bind any events that are required on startup. Common events are:
+	    // 'load', 'deviceready', 'offline', and 'online'.
+	    bindEvents: function() {
+	        document.addEventListener('deviceready', this.onDeviceReady, false);
+	    },
+	    // deviceready Event Handler
+	    //
+	    // The scope of 'this' is the event. In order to call the 'receivedEvent'
+	    // function, we must explicity call 'app.receivedEvent(...);'
+	    onDeviceReady: function() {
+	       'use strict';
+			var domain = "http://210.245.88.160:9000";
+			angular.module('configContenteditable', []).
+			  directive('contenteditable', function () {
+			      return {
+			          restrict: 'A', // only activate on element attribute
+			          require: '?ngModel', // get a hold of NgModelController
+			          link: function (scope, element, attrs, ngModel) {
+			              if (!ngModel) return; // do nothing if no ng-model
 
-		              // Specify how UI should be updated
-		              ngModel.$render = function () {
-		                  element.html(ngModel.$viewValue || '');
-		              };
+			              // Specify how UI should be updated
+			              ngModel.$render = function () {
+			                  element.html(ngModel.$viewValue || '');
+			              };
 
-		              // Listen for change events to enable binding
-		              element.on('blur keyup change', function () {
-		                  scope.$apply(readViewText);
-		              });
+			              // Listen for change events to enable binding
+			              element.on('blur keyup change', function () {
+			                  scope.$apply(readViewText);
+			              });
 
-		              // No need to initialize, AngularJS will initialize the text based on ng-model attribute
+			              // No need to initialize, AngularJS will initialize the text based on ng-model attribute
 
-		              // Write data to the model
-		              function readViewText() {
-		                  var html = element.html();
-		                  // When we clear the content editable the browser leaves a <br> behind
-		                  // If strip-br attribute is provided then we strip this out
-		                  if (attrs.stripBr && html == '<br>') {
-		                      html = '';
-		                  }
-		                  ngModel.$setViewValue(html);
-		              }
-		          }
-		      };
-		  });
+			              // Write data to the model
+			              function readViewText() {
+			                  var html = element.html();
+			                  // When we clear the content editable the browser leaves a <br> behind
+			                  // If strip-br attribute is provided then we strip this out
+			                  if (attrs.stripBr && html == '<br>') {
+			                      html = '';
+			                  }
+			                  ngModel.$setViewValue(html);
+			              }
+			          }
+			      };
+			  });
 
-		angular.module('writeArticleApp', ['snap','angular-medium-editor','configContenteditable'])
-		.config(function(snapRemoteProvider) {
-			snapRemoteProvider.globalOptions = {
-			      disable: 'right',
-			      touchToDrag: false
-			    }
-		})
-		.controller('mainCtrl', function($scope, snapRemote, $http){
-			snapRemote.getSnapper().then(function(snapper){
-				snapper.on('open',function(){
-					$scope.disableBoxControl = true;
-					$scope.$apply();
+			angular.module('writeArticleApp', ['snap','angular-medium-editor','configContenteditable'])
+			.config(function(snapRemoteProvider) {
+				snapRemoteProvider.globalOptions = {
+				      disable: 'right',
+				      touchToDrag: false
+				    }
+			})
+			.controller('mainCtrl', function($scope, snapRemote, $http){
+				snapRemote.getSnapper().then(function(snapper){
+					snapper.on('open',function(){
+						$scope.disableBoxControl = true;
+						$scope.$apply();
+					});
+
+					snapper.on('close', function(){
+						$scope.disableBoxControl = false;
+						$scope.$apply();
+					});
 				});
 
-				snapper.on('close', function(){
-					$scope.disableBoxControl = false;
-					$scope.$apply();
-				});
-			});
-
-			$scope.publishArticle = function(){
-		 		console.log('click', $scope.content);
-		 		var data = {
-		 			'title' : $scope.title,
-		 			'subtitle' : $scope.subtitle,
-		 			'content' : $scope.content
-		 		};
-		 		console.log(data);
+				$scope.publishArticle = function(){
+			 		console.log('click', $scope.content);
+			 		var data = {
+			 			'title' : $scope.title,
+			 			'subtitle' : $scope.subtitle,
+			 			'content' : $scope.content
+			 		};
+			 		console.log(data);
 
 
-		 		$http.post(domain + '/article/save', data).
-				    success(function(data, status, headers, config) {
-				      console.log('success', data);
-				    }).
-				    error(function(data, status, headers, config) {
-				      console.log('error', data);
-				    });
-		 		}
-		})
-		.controller('writeArticleController', ['$scope', function($scope) {
-		
-		}]);
+			 		$http.post(domain + '/article/save', data).
+					    success(function(data, status, headers, config) {
+					      console.log('success', data);
+					    }).
+					    error(function(data, status, headers, config) {
+					      console.log('error', data);
+					    });
+			 		}
+			})
+			.controller('writeArticleController', ['$scope', function($scope) {
+			
+			}]);
+	    }
+	};
 	</script>
 	<link rel="stylesheet" type="text/css" href="lib/medium-editor/css/medium-editor.css">
 	<link rel="stylesheet" type="text/css" href="lib/medium-editor/css//themes/default.css">
@@ -144,6 +163,7 @@
   	</snap-content>
   	<script type="text/javascript">
   		document.getElementById('article_title').focus();
+        app.initialize();
   	</script>
   </body>
 </html>
